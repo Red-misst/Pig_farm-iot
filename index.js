@@ -2,9 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const WebSocket = require("ws");
-
-
-const ws = new WebSocket("ws://192.168.137.251:81/");
+const dotenv = require("dotenv").config();
+const dbConnect = require("./config/db");
+dbConnect();
+const ws = new WebSocket("ws://192.168.137.85:81/");
 
 const app = express();
 const port = 4000;
@@ -16,14 +17,11 @@ app.use(express.static("public"));
 app.set("view engine", "ejs");
 
 // Store data in variables
-let temperatureData = [];
-let turbidityData = [];
-let _temperature;
-let _turbidity;
-let waterLevel;
-let pumpActivated;
-let pumpInActivated;
-let pumpOutActivated;
+let noiseData = [];
+let coughingData = [];
+let _noise;
+let _coughing;
+
 //variables to be used in app
 let time = 0;
 setInterval(() => {
@@ -35,89 +33,41 @@ setInterval(() => {
 
 // WebSocket data receive
 ws.on("open", function () {
-  console.log("Connected to ESP8266 WebSocket server");
+  console.log("Connected to loraTTGO WebSocket server");
 });
 
 ws.on("message", function (data) {
   const dataString = data.toString();
   const dataObject = JSON.parse(dataString);
-  console.log("Received data from ESP8266");
-  console.log("Temperature: ", dataObject.temperature);
-  console.log("Turbidity: ", dataObject.turbidity);
-  console.log("waterlevel: ", dataObject.waterLevel);
+
   //dynamically change the values of temp and turbidity and water level
-  _temperature = dataObject.temperature;
-  _turbidity = dataObject.turbidity;
-  pumpActivated = dataObject.pumpActivated;
-  pumpInActivated = dataObject.pumpInActivated;
-  pumpOutActivated = dataObject.pumpOutActivated;
+  _noise = dataObject.noise;
+  _coughing = dataObject.coughing;
 
-  
-
-  const wLevel = dataObject.waterLevel;
-
-  if (wLevel < 200) {
-    waterLevel = "Low";
-  } else {
-    waterLevel = "Optimum"
-  }
+  console.log("Received data from loraTTGO");
+  console.log("Noise: " + _noise);
+  console.log("Coughing: " + _coughing);
 
   // Add data to arrays
-  temperatureData.push(dataObject.temperature);
-  turbidityData.push(dataObject.turbidity);
+  noiseData.push(_noise);
+  coughingData.push(_coughing);
 });
 
 // Route to serve JSON data
 app.get("/data", (req, res) => {
   res.json({
-    temperature: temperatureData,
-    turbidity: turbidityData,
-    _temperature: _temperature,
+    noise: noiseData,
     time: time,
-    waterLevel: waterLevel,
-    pumpActivated: pumpActivated,
   });
 });
 
 // Renders HTML page
 app.get("/", (req, res) => {
   res.render("index", {
-    temperature: _temperature,
-    turbidity: _turbidity,
-    time: time,
-    waterLevel: waterLevel,
+    noise: _noise,
+    coughing: _coughing,
   });
 });
-
-// Activate inlet pump route
-app.post("/activate-inlet", (req, res) => {
-  // Send message to ESP8266 to activate pump
-  ws.send(JSON.stringify({ action: "activateIntlet" }));
-  res.send("Pump activated");
-});
-
-// Activate inlet pump route
-app.post("/deactivate-inlet", (req, res) => {
-  // Send message to ESP8266 to activate pump
-  ws.send(JSON.stringify({ action: "deactivateInlet" }));
-  res.send("Pump activated");
-});
-
-// Activate outlet pump route
-app.post("/activate-outlet", (req, res) => {
-  // Send message to ESP8266 to activate pump
-  ws.send(JSON.stringify({ action: "activateOutlet" }));
-  res.send("Pump activated");
-});
-
-// deactivate outlet pump route
-app.post("/deactivate-outlet", (req, res) => {
-  // Send message to ESP8266 to activate pump
-  ws.send(JSON.stringify({ action: "deactivateOutlet" }));
-  res.send("Pump activated");
-});
-
-
 
 // Start server
 app.listen(port, () => {
