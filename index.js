@@ -5,7 +5,12 @@ const WebSocket = require("ws");
 const dotenv = require("dotenv").config();
 const dbConnect = require("./config/db");
 dbConnect();
-const ws = new WebSocket("ws://192.168.137.85:81/");
+const {dbPush, dbCreate }= require("./config/dbPush");
+
+const sendSMS = require("./config/twilio");
+
+
+const ws = new WebSocket("ws://192.168.137.156:81/");
 
 const app = express();
 const port = 4000;
@@ -51,6 +56,8 @@ ws.on("message", function (data) {
   // Add data to arrays
   noiseData.push(_noise);
   coughingData.push(_coughing);
+
+  dbPush(_noise);
 });
 
 // Route to serve JSON data
@@ -67,6 +74,11 @@ app.get("/", (req, res) => {
     noise: _noise,
     coughing: _coughing,
   });
+});
+
+// Route to send SMS
+app.get("/sms", (req, res) => {
+  sendSMS();
 });
 
 // Start server

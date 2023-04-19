@@ -58,15 +58,18 @@ function updateCharts() {
     .catch((error) => console.error(error));
 }
 
-setInterval(updateCharts, 4000);
+setInterval(updateCharts, 2000);
 
 //progress bar
 
 // Set progress percentage (0-100) here
-var progressPercentage = 65;
+var progressPercentage =45;
 var progressFill = document.getElementById("progressFill");
 var progressText = document.getElementById("progressText");
 var warning_tab = document.getElementById("warning_tab");
+warning_tab.style.color = "green";
+warning_tab.style.backgroundColor = "lightgreen";
+warning_tab.innerText = "Optimal Animal Health";
 
 setInterval(() => {
   if (progressPercentage > 50) {
@@ -75,6 +78,7 @@ setInterval(() => {
     warning_tab.style.backgroundColor = "rgb(238, 197, 197)";
     warning_tab.innerText = "Suspected Respiratory disease";
   } else {
+    progressFill.style.backgroundColor = "blue";
     warning_tab.style.color = "green";
     warning_tab.style.backgroundColor = "lightgreen";
     warning_tab.innerText = "Optimal Animal Health";
@@ -82,4 +86,27 @@ setInterval(() => {
   // Update progress bar
   progressFill.style.width = progressPercentage + "%";
   progressText.innerText = progressPercentage + "%";
-}, 1000);
+}, 20000);
+
+//send text message
+var sendMsg = document.getElementById("sendMsg");
+
+sendMsg.addEventListener("click", () => {
+  fetch("/sms")
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((error) => console.error(error));
+  
+    setTimeout(() => {
+      progressFill.style.backgroundColor = "rgb(238, 197, 197)";
+      warning_tab.style.color = "red";
+      warning_tab.style.backgroundColor = "rgb(238, 197, 197)";
+      warning_tab.innerText = "Suspected Respiratory disease"
+      progressFill.style.width = "65 %";
+      progressText.innerText = "65 %";
+    } , 15000);
+
+
+});
