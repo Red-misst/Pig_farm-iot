@@ -9,7 +9,7 @@ const sendSMS = () => {
   client.messages
     .create({
       body: "Coughing detected. Suspected respiratory infection.",
-      from: "+16204041661",
+      from: "+15076323700",
       to: "+254114931050",
     })
     .then((message) => console.log(message.sid));
